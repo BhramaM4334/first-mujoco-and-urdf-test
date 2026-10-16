@@ -1,0 +1,2 @@
+/usr/bin/ar qc libl_callback.a  CMakeFiles/l_callback.dir/callback.cpp.o
+/usr/bin/ranlib libl_callback.a

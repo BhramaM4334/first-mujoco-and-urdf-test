@@ -1,0 +1,238 @@
+<robot name="arm_4dof">
+
+    <link name="world"/>	<!-- world is already at the end tag "/world>" no need to redefine the /world>" -->
+	
+<!-- base_link -->
+     <link name="base_link">
+		<visual>
+				<origin xyz = "0 0 0.04" rpy = "0 0 0"/>
+			<geometry>
+				<cylinder length="0.08" radius="0.15"/>
+			</geometry>
+		</visual>
+		
+		<collision>
+				<origin xyz = "0 0 0.04" rpy = "0 0 0"/>
+			<geometry>
+				<cylinder length="0.08" radius="0.15"/>
+			 </geometry>
+		</collision>
+	</link>
+
+	<joint name="fixed" type="fixed">
+		<parent link="world"/>
+        <child link="base_link"/>
+	</joint>
+	
+<!-- baseyaw, lets make it cylinder as like some sort of gear for the spinner yes something like that lol -->
+		<link name="base_yaw">
+		<visual>
+				<origin xyz = "0 0 0.04" rpy = "0 0 0"/>
+			<geometry>
+				<cylinder length="0.01" radius="0.10"/>
+			</geometry>
+		</visual>
+		
+		<collision>
+				<origin xyz = "0 0 0.04" rpy = "0 0 0"/>			
+			<geometry>
+				<cylinder length="0.01" radius="0.10"/>
+			</geometry>
+		</collision>
+	</link>
+
+<!-- continuous because this can rotate 360 degree at Z (yaw) [first link to use joint] -->
+	<joint name="base_rotate" type="continuous">
+		<parent link="base_link"/>
+        <child link="base_yaw"/>
+			
+			<origin xyz = "0 0 0.04" rpy = "0 0 0"/>			 <!-- take a look at this, origin is at 0.04 because joint for the bsae_link starts at half of link's length -->
+			<axis xyz = "0 0 1"/>
+	
+	</joint>
+	
+<!-- forearm pitch (y axis)-->
+		<link name="forearm">
+			<visual>
+					<origin xyz = "0 0 0.225" rpy = "0 0 0"/>
+				<geometry>
+					<cylinder length="0.45" radius="0.05"/>
+				</geometry>
+			</visual>
+		
+		<collision>
+				<origin xyz = "0 0 0.225" rpy = "0 0 0"/>
+			<geometry>
+				<cylinder length="0.45" radius="0.05"/>
+			</geometry>
+		</collision>
+	</link>
+
+<!-- limit: 150 degrees with 15 degree for maximum that cant be reached at left and right, at pitch (y axis)  [for forearm and elbow] -->
+	<joint name="baseyaw" type="revolute">
+		<parent link="base_yaw"/>
+        <child link="forearm"/>
+			
+			<axis xyz="0 1 0"/>
+			<limit upper = "1.44" lower ="-1.44"/>
+			<origin xyz = "0 0 0.04" rpy = "0 0 0"/>
+	</joint>
+
+<!-- elbow (pitch y axis) -->
+		<link name="elbow">
+		<visual>
+				<origin xyz = "0 0 0.15" rpy = "0 0 0"/>
+			<geometry>
+				<cylinder length="0.3" radius="0.05"/>
+			</geometry>
+		</visual>
+		
+		<collision>
+				<origin xyz = "0 0 0.15" rpy = "0 0 0"/>
+			<geometry>
+				<cylinder length="0.3" radius="0.05"/>
+			</geometry>
+		</collision>
+	</link>
+
+	<joint name="elbow" type="revolute">
+		<parent link="forearm"/>
+        <child link="elbow"/>
+		
+			<axis xyz="0 1 0"/>
+			<limit upper = "2.38" lower ="-2.38"/>
+			<origin xyz = "0 0 0.45" rpy ="0 0 0"/>
+	</joint>
+	
+<!-- wrist, extender pitch (y axis) -->
+	<link name="wrist">
+		<visual>
+				<origin xyz = "0 0 0.075" rpy ="0 0 0"/>
+			<geometry>
+				<cylinder length="0.15" radius="0.05"/>
+			</geometry>
+		</visual>
+		
+		<collision>
+				<origin xyz = "0 0 0.075" rpy ="0 0 0"/>
+			<geometry>
+				<cylinder length="0.15" radius="0.05"/>
+			</geometry>
+		</collision>
+	</link>
+	
+<!-- this can go for like 270 degrees i guess? 30 degree maxium at each side (2.62 radians)-->
+	<joint name="wrist" type="revolute">
+		<parent link="elbow"/>
+        <child link="wrist"/>
+		
+		<axis xyz = "0 1 0"/>
+		<limit upper =" 2.38" lower = "-2.38"/>
+		<origin xyz = "0 0 0.3" rpy ="0 0 0"/>
+	</joint>
+
+<!-- lets add some grabber you know, something that can grab stuff || both of them should corrsepond to one and another, like if one goes down, the other should go down too-->
+
+	<link name ="sphere_free">
+		<visual>
+			<origin xyz = "0 0 0.02" rpy = "0 0 0"/>
+			<geometry>
+				<sphere radius="0.04"/>
+			</geometry>
+		</visual>
+		
+		<collision>
+			<origin xyz = "0 0 0.01" rpy = "0 0 0"/>
+			<geometry>
+				<sphere radius="0.04"/>
+			</geometry>
+		</collision>
+		
+	</link>
+
+	<joint name="sphere_j" type="fixed">		<!-- joint origin -> parent link length - sphere radius -->
+		<parent link="wrist"/>
+		<child link ="sphere_free"/>
+		<origin xyz = "0 0 0.13"/>
+	</joint>
+	
+	<link name="hand">
+		<visual>
+			<origin xyz = "0 0 0.035" rpy=" 0 0 0"/>
+			<geometry>
+				<cylinder length="0.07" radius="0.05"/>
+			</geometry>
+		</visual>
+
+		<collision>
+		<origin xyz = "0 0 0.035" rpy=" 0 0 0"/>
+			<geometry>
+				<cylinder length="0.07" radius="0.05"/>
+			</geometry>
+		</collision>
+	</link>
+	
+	<joint name="hand_base" type="continuous">
+		<parent link="sphere_free"/>
+		<child link="hand"/>
+		<origin xyz ="0 0 0.02" rpy="0 0 0"/>		<!-- make joint centered around the sphere or about 2 cm from the last joint-->
+		
+		<axis xyz = "0 0 1"/>
+	</joint>
+
+<!-- fingers -->
+
+	<link name="finger1">
+		<visual>
+			<origin xyz="0 -0.0125 0.045" rpy ="0 0 0"/>
+			<geometry>
+				<box size = "0.05 0.025 0.09" />
+			</geometry>
+		</visual>
+		
+		<collision>
+		<origin xyz="0 0 0.025" rpy ="0 0 0"/>
+			<geometry>
+				<box size = "0.025 0.025 0.05" />
+			</geometry>
+		</collision>
+		
+		</link>
+		
+		<joint name="finger_j1" type="prismatic">
+			<parent link="hand"/>
+			<child link ="finger1"/>
+			<origin xyz= "0 0 0.06" rpy = "0 0 0"/>
+			
+			<axis xyz= "0 1 0"/>
+			<limit upper="0" lower ="-0.025"/>
+		</joint>
+		
+			<link name="finger2">
+		<visual>
+			<origin xyz="0 0.0125 0.045" rpy ="0 0 0"/>
+			<geometry>
+				<box size = "0.05 0.025 0.09" />
+			</geometry>
+		</visual>
+		
+		<collision>
+		<origin xyz="0 0 0.025" rpy ="0 0 0"/>
+			<geometry>
+				<box size = "0.025 0.025 0.05" />
+			</geometry>
+		</collision>
+		
+		</link>
+		
+		<joint name="finger_j2" type="prismatic">
+			<parent link="hand"/>
+			<child link ="finger2"/>
+			<origin xyz= "0 0 0.06" rpy = "0 0 0"/>
+			
+			<axis xyz= "0 1 0"/>
+			<limit upper="0.025" lower ="0"/>
+			
+			<mimic joint = "finger_j1" multiplier="-1"/>
+		</joint>
+</robot>

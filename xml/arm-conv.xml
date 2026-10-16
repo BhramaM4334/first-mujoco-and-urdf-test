@@ -1,0 +1,81 @@
+<!-- arm converted -->
+
+<mujoco model="arm_test">
+  <compiler angle="degree"/>
+  
+  <!-- disable physics-->
+	<option gravity="0 0 0">
+<flag contact="disable" limit="disable" frictionloss="disable"/>	</option>
+<!-- dunno what it does yet
+<default>
+        <joint damping="0.5" armature="0.01"/>
+        <geom type="cylinder" rgba="0.7 0.7 0.7 1"/>
+ </default>
+-->
+  <worldbody>
+	<body name="base_link" pos="0 0 0.04">
+            <geom type="cylinder" size="0.15 0.04" pos="0 0 0"/>
+            
+            <!-- base_yaw -->
+            <body name="base_yaw" pos="0 0 0.04">
+                <joint name="base_rotate" type="hinge" axis="0 0 1"/>
+                <geom type="cylinder" size="0.10 0.005" pos="0 0 0"/>
+                
+                <!-- forearm -->
+                <body name="forearm" pos="0 0 0.04">
+                    <joint name="baseyaw" type="hinge" axis="0 1 0" range="-1.44 1.44"/>
+                    <geom type="cylinder" size="0.05 0.225" pos="0 0 0.225"/>
+                    
+                    <!-- elbow -->
+                    <body name="elbow" pos="0 0 0.45">
+                        <joint name="elbow" type="hinge" axis="0 1 0" range="-2.38 2.38"/>
+                        <geom type="cylinder" size="0.05 0.15" pos="0 0 0.15"/>
+                        
+                        <!-- wrist -->
+                        <body name="wrist" pos="0 0 0.3">
+                            <joint name="wrist" type="hinge" axis="0 1 0" range="-2.38 2.38"/>
+                            <geom type="cylinder" size="0.05 0.075" pos="0 0 0.075"/>
+                            
+                            <!-- sphere_free -->
+                            <body name="sphere_free" pos="0 0 0.13">
+                                <geom type="sphere" size="0.04" pos="0 0 0.02"/>
+                                
+                                <!-- hand -->
+                                <body name="hand" pos="0 0 0.02">
+                                    <joint name="hand_base" type="hinge" axis="0 0 1"/>
+                                    <geom type="cylinder" size="0.05 0.035" pos="0 0 0.035"/>
+                                    
+                                    <!-- finger 1 -->
+                                    <body name="finger1" pos="0 0 0.06">
+                                        <joint name="finger_j1" type="slide" axis="0 1 0" range="-0.025 0"/>
+                                        <geom type="box" size="0.025 0.0125 0.045" pos="0 -0.0125 0.045" rgba="0.5 0.5 0.5 1"/>
+                                    </body>
+
+                                    <!-- finger 2 -->
+                                    <body name="finger2" pos="0 0 0.06">
+                                        <joint name="finger_j2" type="slide" axis="0 1 0" range="0 0.025"/>
+                                        <geom type="box" size="0.025 0.0125 0.045" pos="0 0.0125 0.045" rgba="0.5 0.5 0.5 1"/>
+                                    </body>
+                                </body>
+                            </body>
+                        </body>
+                    </body>
+                </body>
+            </body>
+        </body>
+    </worldbody>
+
+    <!-- Actuators -->
+    <actuator>
+        <motor name="act_base_rotate" joint="base_rotate" />
+        <motor name="act_baseyaw" joint="baseyaw" />
+        <motor name="act_elbow" joint="elbow" />
+        <motor name="act_wrist" joint="wrist"/>
+        <motor name="act_hand_base" joint="hand_base"/>
+        <motor name="act_finger" joint="finger_j1"/>
+    </actuator>
+	<!-- equality for fingerj_1 and finger_j2, dont really know really, but default is 0 1 0 0 0, maybe putting it in negative works-->
+    <equality>
+        <joint joint1="finger_j2" joint2="finger_j1" polycoef="0 -1 0 0 0"/>
+    </equality>
+</mujoco>

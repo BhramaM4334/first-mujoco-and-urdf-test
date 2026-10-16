@@ -1,0 +1,160 @@
+**important note:
+mujoco visualizer combines openGL and MuJoCo header
+
+What is needed first:
+
+mjModel* m = NULL;                  
+mjData* d = NULL;                   
+mjvCamera cam;                      
+mjvOption opt;                      
+mjvScene scn;                       
+mjrContext con;
+
+^--- core data structures
+
+using the specific mj, just call the variable like "cam" "m" "d" etc..
+
+why make it null pointer for model and data?
+
+because, declaring a pointer variable gives a random garbage memory address by default.
+so to prevent crashes happening, we declare these pointers as NULL / nullptr by default when starting so taht it would not instantly crash
+
+what is model and data:
+
+mjModel -> static props | used to look up for structural info like counts, sizes, and default parameters. Simply, it is for the robots property
+
+Get the number of joints: int njoint = m->njnt;
+Get body mass: m->body_mass[body_id];
+Get joint limits: m->jnt_range[joint_id * 2]; (min) and m->jnt_range[joint_id * 2 + 1] (max)
+
+mjData -> dynamic state | this changes constantly as the simulation runs. This is used for inspecting positions, velocities, times, or apply forces
+
+Check current simulation time: double current_time = d->time;
+Read joint positions (qpos): double pos = d->qpos[joint_id];
+Read joint velocities (qvel): double vel = d->qvel[joint_id];
+Apply actuator controls: d->ctrl[actuator_id] = 1.5; (must be set before calling mj_step(m, d))
+
+mjrContext -> holds the visual graphics
+
+---
+
+mjv_defaultCamera(&cam);
+mjv_defaultPerturb(&pert);
+mjv_defaultOption(&opt);
+mjr_defaultContext(&con);
+
+^----- to set the position at the default 
+
+mjv
+    Data structure related to abstract visualization, for example mjvCamera.
+mjr
+    Data structure related to OpenGL rendering, for example mjrContext.
+
+mjv_
+    Function related to abstract visualization, for example mjv_updateScene.
+mjr_
+    Function related to OpenGL rendering, for example mjr_render.
+
+---
+glfwInit();
+GLFWwindow* window = glfwCreateWindow(1200, 900, "Demo", NULL, NULL);
+==What's inside this GLFWwindow*:
+1200: The initial width of the window in pixels.
+
+900: The initial height of the window in pixels.
+
+"Demo": The title text that appears at the top of the window frame.
+
+nullptr: Specifies which monitor to go fullscreen on. Passing nullptr creates a standard windowed application instead of fullscreen.
+
+nullptr: Used for advanced OpenGL context sharing between multiple windows. Passing nullptr means a standard independent context.
+===>
+GLFWwindow * glfwCreateWindow 	
+    ( 	
+        int  	width,
+		int  	height,
+		const char *  	title,
+		GLFWmonitor *  	monitor,
+		GLFWwindow *  	share 
+	) 		
+(from glfw.org)
+
+glfwMakeContextCurrent(window);
+glfwSwapInterval(1);
+
+^-- load model and data
+initiialize glfw
+make glfw window
+makecontext current into this window
+swap interval is to make vsync, better to turn it on i guess
+---
+mjv_makeScene(m, &scn, 1000);
+mjr_makeContext(m, &con, mjFONTSCALE_100);
+
+makeScene -> renders scene (&scn) [pass by reference], using theh model definition (m, static / need the info of the model only), the third argument is thte maximum amount of geometry that can be visualized
+
+makeContext -> for graphic rendering, uses (&con). compiles shaders, upload textures, and prepare everything for GPU to draw the model. Third argument is to determine font scale for any onscreen text (100% scale = standard size
+
+--
+
+the int main(){
+
+while( !glfwWindowShouldClose(window) ) { //if window is not closed (x button is note clicked
+
+mjtNum simstart = d->time;
+    while( d->time - simstart < 1.0/60.0 ) {    since its 60 fps
+        mj_step(m, d);
+    }
+
+physics simulation keeps pace with real time video frames
+do mj_step until enough physics steps have run to cover the 1/60th second window
+
+Here is step-by-step how that inner loop works:
+
+    simstart = d->time;: This records the starting timestamp (for example, 0.0 seconds).
+
+    mj_step(m, d);: This runs one physics step, which advances d->time forward by a tiny fraction of a second (known as the timestep, usually 0.002 seconds).
+
+    The Check: The loop checks if d->time - simstart is still less than 1.0/6.0 (about 0.0167 seconds).
+
+        Iteration 1: d->time becomes 0.002. (0.002 < 0.0167 is true, so it loops again)
+
+        Iteration 2: d->time becomes 0.004. (0.004 < 0.0167 is true)
+
+        ...it keeps looping until d->time reaches 0.0167, at which point the condition becomes false and the inner loop exits.
+
+This ensures that no matter how fast your computer is, the physics simulation always runs the exact amount of math needed to cover 1/60th of a second before drawing the next frame.
+What does mj_step(m, d) do?
+
+mj_step(m, d) is the core engine function of MuJoCo. It advances the physics simulation forward by exactly one timestep.
+
+During that single function call, MuJoCo calculates:
+
+    Forces: Gravity, user controls (d->ctrl), damping, and spring forces.
+
+    Collisions: Detects when objects hit each other and calculates contact forces.
+
+    Constraints: Resolves limits like joint angle boundaries or locked hinges.
+
+    Integration: Updates all positions (d->qpos) and velocities (d->qvel) based on accelerations, and advances d->time
+
+------
+mjrRect viewport = {0, 0, 0, 0};
+glfwGetFramebufferSize(window, &viewport.width, &viewport.height);.
+
+initialize veiwport (left, bottom, width, height) set to 0 as a blank container
+getframebuffer => extract the physical pixeel width and height of the window and fills the width and height for the viewport variable
+
+------
+
+mjv_updateScene(m, d, &opt, &pert, &cam, mjCAT_ALL, &scn);
+mjr_render(viewport, &scn, &con); 
+
+updatescene:
+This function bridges your physics data (m and d) with your graphics system. It looks at the current state of your simulation and populates your scene container (scn) with everything that needs to be drawn.
+
+    It takes your model (m), state (d), visual options (opt), mouse interactions (pert), and camera view (cam).
+
+    mjCAT_ALL tells it to include all visual categories (geometries, lights, joints, contact forces, etc.).
+
+This function takes the fully prepared scene (scn) and uses the OpenGL context (con) to actually paint the 3D pixels onto the window area defined by your viewport. Once this line runs, the complete visual frame is drawn inside your application window's back buffer, ready to be pushed to the screen by glfwSwapBuffers.

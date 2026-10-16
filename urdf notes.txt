@@ -1,0 +1,22 @@
+joints:
+
+joint spawns at the START of the parent's link
+otherwise it could spawn at the start of parent's frame 
+(the first origin that is connected to the base_link)
+the rest you can js put the origin z the same as the length of the parent link
+
+the new CHILD FRAME'S JOINTS will be the NEW next joint's starting point 
+
+visual:
+visual too, since visual spawns at the middle of the joint (it spawns centered at joint)
+so to find the origin for visual you do length of the child link/2
+
+<origin>
+finding origin value is by parent link length/2 to set at the top or bottom from parent
+
+for joint:
+for the first parent, you can do: parent link length/2
+for the rest you can input parent link length 
+(
+
+all of the above is to make the joint go to the top or bottom of the link

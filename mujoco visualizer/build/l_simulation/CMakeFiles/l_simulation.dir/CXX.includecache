@@ -1,0 +1,46 @@
+#IncludeRegexLine: ^[ 	]*[#%][ 	]*(include|import)[ 	]*[<"]([^">]+)([">])
+
+#IncludeRegexScan: ^.*$
+
+#IncludeRegexComplain: ^$
+
+#IncludeRegexTransform: 
+
+../l_callback/callback.h
+mujoco/mujoco.h
+-
+GLFW/glfw3.h
+-
+
+/home/bhrama/--ABINARA-1/urdf n mujoco/KPP/mujoco visualizer/l_simulation/simulation.cpp
+mujoco/mujoco.h
+-
+GLFW/glfw3.h
+-
+cstdio
+-
+cmath
+-
+vector
+-
+algorithm
+-
+callback.h
+/home/bhrama/--ABINARA-1/urdf n mujoco/KPP/mujoco visualizer/l_simulation/callback.h
+simulation.h
+/home/bhrama/--ABINARA-1/urdf n mujoco/KPP/mujoco visualizer/l_simulation/simulation.h
+
+/home/bhrama/--ABINARA-1/urdf n mujoco/KPP/mujoco visualizer/l_simulation/simulation.h
+mujoco/mujoco.h
+-
+GLFW/glfw3.h
+-
+cstdio
+-
+cmath
+-
+vector
+-
+algorithm
+-
+
